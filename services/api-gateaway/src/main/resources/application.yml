@@ -1,0 +1,33 @@
+server:
+  port: 8080
+
+spring:
+  cloud:
+    gateway:
+      routes:
+
+        # -------------------------
+        # Booking-Service (REST)
+        # -------------------------
+        - id: booking-service
+          uri: http://localhost:8000
+          predicates:
+            - Path=/booking/**
+          filters:
+            - StripPrefix=1
+
+        # -------------------------
+        # Billing-Service (SOAP)
+        # -------------------------
+        - id: billing-service
+          uri: http://localhost:5102
+          predicates:
+            - Path=/billing/BillingService/soap/**
+          filters:
+            # remove /billing
+            - RewritePath=/billing/(?<segment>.*), /${segment}
+
+            # forward headers (important for WSDL)
+            - AddRequestHeader=X-Forwarded-Proto, http
+            - AddRequestHeader=X-Forwarded-Host, localhost
+            - AddRequestHeader=X-Forwarded-Port, 8080
